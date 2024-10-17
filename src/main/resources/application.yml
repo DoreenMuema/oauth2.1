@@ -6,32 +6,17 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-  security:
-    oauth2:
-      client:
-        registration:
-          client:
-            client-id: client
-            client-secret: "{noop}noop-secret"
-            authorization-grant-type: client_credentials
-            scope: read, write
-            provider: default  # Referencing the provider below
-        provider:
-          default:
-            authorization-uri: http://localhost:8080/oauth/authorize
-            token-uri: http://localhost:8080/oauth/token  # Ensure the correct endpoint here
-
-
 logging:
   level:
-    org.springframework.security: DEBUG  # Enable DEBUG level logging for security-related information
-
-
-
+    org.springframework.security: DEBUG
+    logging:
+      level:
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
