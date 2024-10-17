@@ -12,3 +12,7 @@ CREATE TABLE IF NOT EXISTS oauth2_registered_client (
                                                                           -- Token-related settings (e.g., expiration, token type)
 );
 
+DROP TABLE IF EXISTS public.oauth2_registered_client CASCADE;
+DROP TABLE IF EXISTS hibernate_migration;
+DROP TABLE IF EXISTS flyway_schema_history;
+
