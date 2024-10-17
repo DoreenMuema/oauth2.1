@@ -1,20 +1,18 @@
 package com.muema.oauth21.controllers;
 
-import com.muema.oauth21.services.ClientRegistrationDto;
+import com.muema.oauth21.model.OAuth2RegisteredClientDTO;
 import com.muema.oauth21.services.ClientRegistrationService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/clients")
+@RequestMapping("/register")
 public class ClientRegistrationController {
 
     private final ClientRegistrationService clientRegistrationService;
@@ -24,17 +22,17 @@ public class ClientRegistrationController {
     }
 
     @PostMapping
-    public ResponseEntity<RegisteredClient> registerClient(@RequestBody ClientRegistrationDto registrationDto) {
-        // Create RegisteredClient from DTO
+    public ResponseEntity<RegisteredClient> registerClient(@RequestBody OAuth2RegisteredClientDTO registrationDto) {
+        // Create a RegisteredClient from the DTO
         RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId(registrationDto.getClientId())
-                .clientSecret(registrationDto.getClientSecret())
-                .clientAuthenticationMethod(new ClientAuthenticationMethod(registrationDto.getClientAuthenticationMethod()))
-                .authorizationGrantType(new AuthorizationGrantType(registrationDto.getAuthorizationGrantType()))
-                .scopes(scopes -> scopes.addAll(registrationDto.getScopes()))
+                .clientSecret("{noop}" + registrationDto.getClientSecret())  // Use {noop} for plaintext
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
+                .authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
                 .build();
 
-        clientRegistrationService.save(registeredClient);
-        return ResponseEntity.ok(registeredClient);
+        // Save the DTO using the service
+        clientRegistrationService.save(registrationDto);  // Use registrationDto here
+        return ResponseEntity.status(HttpStatus.CREATED).body(registeredClient);
     }
 }

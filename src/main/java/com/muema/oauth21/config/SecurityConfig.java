@@ -16,8 +16,13 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests((authorizeRequests) -> authorizeRequests
-                        .requestMatchers("/public").permitAll()  // Public endpoint, no authentication needed
-                        .anyRequest().authenticated()            // All other endpoints need authentication
+                        .requestMatchers("/public").permitAll()
+                        .requestMatchers("/register").permitAll()
+                        .requestMatchers("/login").authenticated()
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/register")      // Disable CSRF for /register
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt

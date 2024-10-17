@@ -15,6 +15,8 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 logging:
   level:
-    org.springframework.security: DEBUG  # Enable DEBUG level logging for security-related information
-
-
+    org.springframework.security: DEBUG
+    logging:
+      level:
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE

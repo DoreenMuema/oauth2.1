@@ -12,7 +12,7 @@
 	<artifactId>oauth2.1</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>oauth2.1</name>
-	<description>springsecurity</description>
+	<description>spring security</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -74,6 +74,10 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.persistence</groupId>
+			<artifactId>jakarta.persistence-api</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>mysql</groupId>
