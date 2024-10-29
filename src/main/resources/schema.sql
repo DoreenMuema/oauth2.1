@@ -1,8 +1,8 @@
-CREATE TABLE registered_client (
-                                   id SERIAL PRIMARY KEY,
-                                   client_id VARCHAR(255) NOT NULL UNIQUE,
-                                   client_secret VARCHAR(255) NOT NULL,
-                                   client_authentication_method VARCHAR(255) NOT NULL,
-                                   authorization_grant_type VARCHAR(255) NOT NULL,
-                                   scopes VARCHAR(255)
+CREATE TABLE Users (
+                       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                       first_name VARCHAR(255) NOT NULL,
+                       last_name VARCHAR(255) NOT NULL,
+                       username VARCHAR(255) NOT NULL UNIQUE,
+                       email VARCHAR(255) NOT NULL UNIQUE,
+                       password VARCHAR(255) NOT NULL
 );

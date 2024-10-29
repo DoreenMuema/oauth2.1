@@ -1,44 +1,94 @@
 package com.muema.oauth21.controllers;
 
 
-import com.muema.oauth21.model.Client;
-import com.muema.oauth21.services.ClientService;
+import com.muema.oauth21.model.User;
+import com.muema.oauth21.services.UserService;
+import com.muema.oauth21.util.JwtTokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api")
 public class HomeController {
 
     @Autowired
-    private ClientService clientService;
+    private UserService userService;
+
+    @Autowired
+    private JwtTokenService jwtTokenService;
 
     @PostMapping("/register")
-    public ResponseEntity<Client> registerClient(@RequestBody Client client) {
-        try {
-            Client registeredClient = clientService.registerClient(client);
-            return new ResponseEntity<>(registeredClient, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+    public User register(@RequestBody User user) {
+        return userService.registerUser(user);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(
+            @RequestHeader("clientId") String clientId,
+            @RequestHeader("clientSecret") String clientSecret,
+            @RequestBody User user) {
+
+        Optional<User> optionalUser = userService.findByUsername(user.getUsername());
+
+        if (optionalUser.isPresent()) {
+            User existingUser = optionalUser.get();
+
+            if (clientId.equals(existingUser.getClientId()) &&
+                    clientSecret.equals(existingUser.getClientSecret()) &&
+                    new BCryptPasswordEncoder().matches(user.getPassword(), existingUser.getPassword())) {
+
+                // Generate token with JwtTokenService, including additional user info
+                String token = jwtTokenService.generateToken(
+                        clientId,
+                        existingUser.getUsername(),
+                        existingUser.getFirstName(),
+                        existingUser.getLastName(),
+                        existingUser.getEmail()
+                );
+
+                Date expiry = new Date(System.currentTimeMillis() + JwtTokenService.EXPIRATION_TIME);
+
+                // Directly return the response as a map
+                return ResponseEntity.ok(Map.of(
+                        "id", existingUser.getId(),
+                        "firstName", existingUser.getFirstName(),
+                        "lastName", existingUser.getLastName(),
+                        "username", existingUser.getUsername(),
+                        "email", existingUser.getEmail(),
+                        "token", token,
+                        "expiry", expiry
+                ));
+            }
         }
+
+        return ResponseEntity.status(401).body("Invalid credentials");
     }
 
     @GetMapping("/clients")
-    public ResponseEntity<?> getClients() {
-        // Retrieve the authenticated token from the SecurityContext
-        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public ResponseEntity<?> getClients(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
 
-        // Extract the clientId from the JWT claims
-        String clientId = jwt.getSubject(); // Use 'sub' as clientId or use jwt.getClaim("sub")
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7); // Extract the token
 
-        // Fetch client details from the database
-        Client client = clientService.getClientByClientId(clientId);
+            // Validate the token
+            if (jwtTokenService.validateToken(token)) {
+                return ResponseEntity.ok("This is the protected resource gained by access token.");
+            } else {
+                return ResponseEntity.status(403).body("Invalid or expired token.");
+            }
+        }
 
-        // Return client details as a response
-        return ResponseEntity.ok(client);
+        return ResponseEntity.status(400).body("Authorization header must be provided in the 'Bearer' format.");
     }
+
+
 }
