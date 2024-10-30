@@ -45,9 +45,35 @@ public class HomeController {
                     clientSecret.equals(existingUser.getClientSecret()) &&
                     new BCryptPasswordEncoder().matches(user.getPassword(), existingUser.getPassword())) {
 
-                // Generate token with JwtTokenService, including additional user info
+                // Generate OTP and store it for the user
+                userService.saveOtpForUser(existingUser);
+
+                // Return the OTP in the response for testing purposes (you can handle OTP delivery later)
+                return ResponseEntity.ok(Map.of(
+                        "message", "OTP has been generated. Please verify.",
+                        "otp", existingUser.getOtp()  // Only for testing, remove in production
+                ));
+            }
+        }
+
+        return ResponseEntity.status(401).body("Invalid credentials");
+    }
+
+    @PostMapping("/validate-otp")
+    public ResponseEntity<?> validateOtp(@RequestBody Map<String, String> otpRequest) {
+        String username = otpRequest.get("username");
+        String otp = otpRequest.get("otp");
+
+        Optional<User> optionalUser = userService.findByUsername(username);
+
+        if (optionalUser.isPresent()) {
+            User existingUser = optionalUser.get();
+
+            // Validate the OTP
+            if (userService.validateOtp(existingUser, otp)) {
+                // Generate token with JwtTokenService after OTP is verified
                 String token = jwtTokenService.generateToken(
-                        clientId,
+                        existingUser.getClientId(),
                         existingUser.getUsername(),
                         existingUser.getFirstName(),
                         existingUser.getLastName(),
@@ -56,7 +82,6 @@ public class HomeController {
 
                 Date expiry = new Date(System.currentTimeMillis() + JwtTokenService.EXPIRATION_TIME);
 
-                // Directly return the response as a map
                 return ResponseEntity.ok(Map.of(
                         "id", existingUser.getId(),
                         "firstName", existingUser.getFirstName(),
@@ -67,9 +92,10 @@ public class HomeController {
                         "expiry", expiry
                 ));
             }
+            return ResponseEntity.status(403).body("Invalid or expired OTP.");
         }
 
-        return ResponseEntity.status(401).body("Invalid credentials");
+        return ResponseEntity.status(404).body("User not found.");
     }
 
     @GetMapping("/clients")

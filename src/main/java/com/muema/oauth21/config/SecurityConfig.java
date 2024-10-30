@@ -28,7 +28,7 @@ public class SecurityConfig {
         http
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/register", "/api/login").permitAll()
+                        .requestMatchers("/api/register", "/api/login","api/validate-otp").permitAll()
                         .requestMatchers("/api/clients").authenticated() // Require authentication for this endpoint
                         .anyRequest().authenticated() // All other requests require authentication
                 )
