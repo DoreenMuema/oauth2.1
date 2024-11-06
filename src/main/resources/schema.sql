@@ -6,3 +6,11 @@ CREATE TABLE registered_client (
                                    authorization_grant_type VARCHAR(255) NOT NULL,
                                    scopes VARCHAR(255)
 );
+CREATE TABLE otp (
+                     client_id VARCHAR(255) PRIMARY KEY NOT NULL UNIQUE,
+                     otp VARCHAR(255),
+                     otp_expiration TIMESTAMP
+);
+ALTER TABLE users1
+    DROP COLUMN otp,
+    DROP COLUMN otp_expiration;

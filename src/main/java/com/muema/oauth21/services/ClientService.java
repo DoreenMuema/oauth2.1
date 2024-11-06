@@ -1,34 +1,41 @@
 package com.muema.oauth21.services;
 
-
 import com.muema.oauth21.model.Client;
 import com.muema.oauth21.repo.ClientRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.muema.oauth21.util.PKCEUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
+
+import java.security.NoSuchAlgorithmException;
+import java.util.Optional;
+
 
 @Service
 public class ClientService {
 
     private final ClientRepository clientRepository;
-    private final PasswordEncoder passwordEncoder;  // Inject PasswordEncoder
 
-    public ClientService(ClientRepository clientRepository, PasswordEncoder passwordEncoder) {
+    @Autowired
+    public ClientService(ClientRepository clientRepository) {
         this.clientRepository = clientRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
-    public Client registerClient(Client client) {
-        if (clientRepository.findByClientId(client.getClientId()).isPresent()) {
-            throw new IllegalArgumentException("Client ID already registered");
-        }
+    public Optional<Client> findClientById(String clientId) {
+        return clientRepository.findByClientId(clientId);
+    }
 
-        // Encode client secret before saving to the database
-        client.setClientSecret(passwordEncoder.encode(client.getClientSecret()));
+    public Client saveClient(Client client) throws NoSuchAlgorithmException {
+
+        String codeVerifier = PKCEUtils.generateCodeVerifier();
+        String codeChallenge = PKCEUtils.generateCodeChallenge(codeVerifier);
+        client.setCodeChallenge(codeChallenge);
+        client.setCodeVerifier(codeVerifier);
+        return clientRepository.save(client);
+    }
+    public Client updateClient(Client client) throws NoSuchAlgorithmException {
         return clientRepository.save(client);
     }
 
 
-    public Client getClientByClientId(String clientId) {
-        return clientRepository.findByClientId(clientId).orElse(null);
-    }
 }
